@@ -1,9 +1,5 @@
-"""
-High School Management System API
 
-A super simple FastAPI application that allows students to view and sign up
-for extracurricular activities at Mergington High School.
-"""
+
 
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
@@ -14,12 +10,9 @@ from pathlib import Path
 app = FastAPI(title="Mergington High School API",
               description="API for viewing and signing up for extracurricular activities")
 
-# Mount the static files directory
 current_dir = Path(__file__).parent
-app.mount("/static", StaticFiles(directory=os.path.join(Path(__file__).parent,
-          "static")), name="static")
+app.mount("/static", StaticFiles(directory=os.path.join(current_dir, "static")), name="static")
 
-# In-memory activity database
 activities = {
    "Clube de Xadrez": {
       "description": "Aprenda estratégias e participe de torneios de xadrez",
@@ -80,31 +73,36 @@ activities = {
    }
 }
 
-
 @app.get("/")
 def root():
     return RedirectResponse(url="/static/index.html")
-
 
 @app.get("/activities")
 def get_activities():
     return activities
 
-
 @app.post("/activities/{activity_name}/signup")
 def signup_for_activity(activity_name: str, email: str):
-    """Sign up a student for an activity"""
-    # Validate activity exists
     if activity_name not in activities:
         raise HTTPException(status_code=404, detail="Atividade não encontrada")
-
-    # Get the specificy activity
     activity = activities[activity_name]
-    # Validar se o estudante já está inscrito
     if email in activity["participants"]:
-      raise HTTPException(status_code=400, detail="Estudante já inscrito nesta atividade")   
-    
-
-    # Add student
+        raise HTTPException(status_code=400, detail="Estudante já inscrito nesta atividade")
     activity["participants"].append(email)
     return {"message": f"{email} inscrito(a) em {activity_name} com sucesso"}
+
+@app.post("/activities/{activity_name}/remove")
+def remove_participant(activity_name: str, email: str):
+    if activity_name not in activities:
+        raise HTTPException(status_code=404, detail="Atividade não encontrada")
+    activity = activities[activity_name]
+    email_normalized = email.strip().lower()
+    found = None
+    for p in activity["participants"]:
+        if p.strip().lower() == email_normalized:
+            found = p
+            break
+    if not found:
+        raise HTTPException(status_code=404, detail="Participante não encontrado nesta atividade")
+    activity["participants"].remove(found)
+    return {"message": f"{email} removido(a) de {activity_name} com sucesso"}

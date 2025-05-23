@@ -26,8 +26,15 @@ document.addEventListener("DOMContentLoaded", () => {
           participantsSection = `
             <div class="participants-section">
               <strong>Participantes inscritos:</strong>
-              <ul class="participants-list">
-                ${details.participants.map(p => `<li>${p}</li>`).join("")}
+              <ul class="participants-list" style="list-style: none; padding-left: 0;">
+                ${details.participants.map(p => `
+                  <li style="display: flex; align-items: center; gap: 6px;">
+                    <span>${p}</span>
+                    <button class="delete-participant-btn" title="Remover participante" data-activity="${name}" data-email="${p}" style="background: none; border: none; color: #c62828; cursor: pointer; font-size: 18px; padding: 0; margin-left: 6px;">
+                      🗑️
+                    </button>
+                  </li>
+                `).join("")}
               </ul>
             </div>
           `;
@@ -83,6 +90,7 @@ document.addEventListener("DOMContentLoaded", () => {
         messageDiv.textContent = result.message;
         messageDiv.className = "success";
         signupForm.reset();
+        fetchActivities(); // Atualiza a lista de atividades após inscrição
       } else {
         messageDiv.textContent = result.detail || "Ocorreu um erro";
         messageDiv.className = "error";
@@ -104,4 +112,36 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Initialize app
   fetchActivities();
+  // Evento de clique para remover participante
+  activitiesList.addEventListener("click", async (event) => {
+    if (event.target.classList.contains("delete-participant-btn")) {
+      const activity = event.target.getAttribute("data-activity");
+      const email = event.target.getAttribute("data-email");
+      if (confirm(`Deseja remover o participante ${email} da atividade ${activity}?`)) {
+        try {
+          const response = await fetch(`/activities/${encodeURIComponent(activity)}/remove?email=${encodeURIComponent(email)}`, {
+            method: "POST",
+          });
+          const result = await response.json();
+          if (response.ok) {
+            messageDiv.textContent = result.message;
+            messageDiv.className = "success";
+            fetchActivities();
+          } else {
+            messageDiv.textContent = result.detail || "Ocorreu um erro ao remover participante.";
+            messageDiv.className = "error";
+          }
+          messageDiv.classList.remove("hidden");
+          setTimeout(() => {
+            messageDiv.classList.add("hidden");
+          }, 5000);
+        } catch (error) {
+          messageDiv.textContent = "Falha ao remover participante. Por favor, tente novamente.";
+          messageDiv.className = "error";
+          messageDiv.classList.remove("hidden");
+          console.error("Erro ao remover participante:", error);
+        }
+      }
+    }
+  });
 });

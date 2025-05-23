@@ -80,11 +80,12 @@ section h3 {
 }
 
 .participants-list {
-  list-style-type: disc;
-  margin-left: 22px;
-  margin-bottom: 0;
-  color: #333;
-  font-size: 15px;
+list-style-type: none;
+margin-left: 0;
+margin-bottom: 0;
+color: #333;
+font-size: 15px;
+padding-left: 0;
 }
 
 .no-participants {
